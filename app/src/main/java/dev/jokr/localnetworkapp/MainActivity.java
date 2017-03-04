@@ -1,19 +1,19 @@
 package dev.jokr.localnetworkapp;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.view.View;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.Toast;
+import android.widget.TextView;
 
-import dev.jokr.localnet.LocalClient;
 import dev.jokr.localnet.LocalServer;
-import dev.jokr.localnet.models.Payload;
+import dev.jokr.localnetworkapp.BroadCastReceiver.BatteryChargeReceiver;
 import dev.jokr.localnetworkapp.discovery.DiscoveryFragment;
 import dev.jokr.localnetworkapp.session.SessionFragment;
 
-public class MainActivity extends AppCompatActivity implements DiscoveryFragment.FragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements DiscoveryFragment.FragmentInteractionListener, BatteryChargeReceiver.GetChargeInterface {
 
     Button btnJoin;
     Button btnCreate;
@@ -21,6 +21,10 @@ public class MainActivity extends AppCompatActivity implements DiscoveryFragment
 
     private LocalServer localServer;
     private boolean isServer;
+    IntentFilter iFilter;
+    BatteryChargeReceiver receiver;
+    TextView textView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +36,17 @@ public class MainActivity extends AppCompatActivity implements DiscoveryFragment
         layoutMain = (FrameLayout) findViewById(R.id.layout_main);
 
         showDiscoveryFragment();
+        receiver = new BatteryChargeReceiver();
+
+        textView = (TextView) findViewById(R.id.tv_percentage);
+        iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(receiver,iFilter);
+        receiver.setListener(this);
+
+
+
+
+
     }
 
 
@@ -59,5 +74,10 @@ public class MainActivity extends AppCompatActivity implements DiscoveryFragment
                 .beginTransaction()
                 .replace(R.id.layout_main, SessionFragment.newInstance(SessionFragment.CLIENT))
                 .commit();
+    }
+
+    @Override
+    public void BatteryCharge(String charge) {
+        textView.setText(charge);
     }
 }

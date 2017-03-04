@@ -3,6 +3,17 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
+<TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="00"
+    android:layout_gravity="center"
+    android:textColor="@color/colorPrimary"
+    android:textSize="22sp"
+    android:layout_margin="15dp"
+    android:id="@+id/textview"/>
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -12,8 +23,17 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Addition"
+        android:visibility="gone"
+        android:id="@+id/btnAddition"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="STOP"
         android:id="@+id/btn_stop_session"/>
+
+    <include layout="@layout/layout_calculate"></include>
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="wrap_content"

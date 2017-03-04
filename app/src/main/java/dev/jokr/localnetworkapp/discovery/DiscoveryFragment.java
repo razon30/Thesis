@@ -1,6 +1,14 @@
 package dev.jokr.localnetworkapp.discovery;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,6 +19,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import dev.jokr.localnet.LocalClient;
 import dev.jokr.localnet.LocalServer;
@@ -36,6 +47,11 @@ public class DiscoveryFragment extends Fragment implements LocalServer.OnUiEvent
     RecyclerView recyclerView;
     private FragmentInteractionListener listener;
 
+
+    Button stopWifi;
+    WifiReceiver receiverWifi;
+    WifiManager wifimanager;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -48,6 +64,30 @@ public class DiscoveryFragment extends Fragment implements LocalServer.OnUiEvent
         connectedClients.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new MessagesAdapter(LayoutInflater.from(getContext()));
         connectedClients.setAdapter(adapter);
+
+        stopWifi = (Button) view.findViewById(R.id.stop);
+        wifimanager = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
+
+        final boolean[] b = {true};
+
+        stopWifi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                if (b[0]) {wifimanager.setWifiEnabled(false); b[0] = false;}
+                else {
+
+                    wifimanager.setWifiEnabled(true); b[0] = true;
+                    receiverWifi = new WifiReceiver();
+                    getActivity().registerReceiver(receiverWifi, new IntentFilter(
+                            WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+
+                    doInback();
+
+                }
+            }
+        });
 
         btnCreate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,7 +131,11 @@ public class DiscoveryFragment extends Fragment implements LocalServer.OnUiEvent
         isServer = false;
 
         LocalClient localClient = new LocalClient(getContext());
-        localClient.connect(new Payload<MyProfile>(new MyProfile("Razon", "Hossain")));
+
+        String name = Build.USER;
+        String device = Build.DEVICE;
+
+        localClient.connect(new Payload<MyProfile>(new MyProfile(name, device)));
         localClient.setDiscoveryReceiver(new LocalClient.DiscoveryStatusReceiver() {
             @Override
             public void onDiscoveryTimeout() {
@@ -152,4 +196,56 @@ public class DiscoveryFragment extends Fragment implements LocalServer.OnUiEvent
         public void onStartSession();
         public void onStartClientSession();
     }
+
+
+
+
+
+
+    class WifiReceiver extends BroadcastReceiver
+    {
+        public void onReceive(Context c, Intent intent)
+        {
+
+            ArrayList<String> connections=new ArrayList<String>();
+            ArrayList<Float> Signal_Strenth= new ArrayList<Float>();
+
+          //  sb = new StringBuilder();
+            List<ScanResult> wifiList;
+            wifiList = wifimanager.getScanResults();
+            for(int i = 0; i < wifiList.size(); i++)
+            {
+
+                connections.add(wifiList.get(i).SSID);
+                adapter.addMessage(wifiList.get(i).SSID);
+                Toast.makeText(getContext(), wifiList.get(i).SSID, Toast.LENGTH_LONG).show();
+
+            }
+
+
+        }
+    }
+
+    public void doInback()
+    {
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run()
+            {
+                // TODO Auto-generated method stub
+                wifimanager = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
+
+                receiverWifi = new WifiReceiver();
+                getActivity().registerReceiver(receiverWifi, new IntentFilter(
+                        WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+                wifimanager.startScan();
+                doInback();
+            }
+        }, 1000);
+
+    }
+
+
+
 }
