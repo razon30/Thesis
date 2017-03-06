@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,11 +55,21 @@ public class SessionFragment extends Fragment {
     WifiManager wifimanager;
 
 
+    String ADDITION = "add";
+    String SUBSTRACTION = "sub";
+    String MULTIPLICATION = "mul";
+    String DIVISION = "div";
+
+    long startTime, endTime;
+    TextView time, bitswithoutFunc, bitsWithFUnc;
+
+
     //for client
     Button addition;
-
     String[] OperationList = {"Addition", "Substraction", "Multiplication", "Division"};
-
+    LinearLayout calcualtorLayout;
+    Button add, sub, mul, div;
+    long withFunc = 0, withoutFunc = 0;
 
     //for server
     SharedPreferences preferences;
@@ -80,7 +91,16 @@ public class SessionFragment extends Fragment {
 
         textview = (TextView) view.findViewById(R.id.textview);
         addition = (Button) view.findViewById(R.id.btnAddition);
+        calcualtorLayout = (LinearLayout) view.findViewById(R.id.calculate_layout);
+        add = (Button) view.findViewById(R.id.add);
+        sub = (Button) view.findViewById(R.id.sub);
+        mul = (Button) view.findViewById(R.id.multi);
+        div = (Button) view.findViewById(R.id.div);
         context = getActivity();
+
+        time = (TextView) view.findViewById(R.id.timeTosend);
+        bitswithoutFunc = (TextView) view.findViewById(R.id.numberOfBitswithoutFunc);
+        bitsWithFUnc = (TextView) view.findViewById(R.id.numberOfBitswithFUnc);
 
         this.role = getArguments().getInt(ROLE);
         recyclerView = (RecyclerView) view.findViewById(R.id.list_messages);
@@ -115,11 +135,40 @@ public class SessionFragment extends Fragment {
     private void setupClient() {
         client = new LocalClient(getContext());
 
-        addition.setVisibility(View.VISIBLE);
+        //  addition.setVisibility(View.VISIBLE);
+        calcualtorLayout.setVisibility(View.VISIBLE);
         addition.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 inflateSendValues("add");
+            }
+        });
+
+        bitswithoutFunc.setVisibility(View.VISIBLE);
+        bitsWithFUnc.setVisibility(View.VISIBLE);
+
+        add.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                inflateSendValues(ADDITION);
+            }
+        });
+        sub.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                inflateSendValues(SUBSTRACTION);
+            }
+        });
+        mul.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                inflateSendValues(MULTIPLICATION);
+            }
+        });
+        div.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                inflateSendValues(DIVISION);
             }
         });
 
@@ -143,9 +192,12 @@ public class SessionFragment extends Fragment {
                                 .itemsCallback(new MaterialDialog.ListCallback() {
                                     @Override
                                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-
+                                        String msg = "act:" + which;
                                         client.sendSessionMessage(new Payload<MyMessage>
-                                                (new MyMessage("act:"+which)));
+                                                (new MyMessage(msg)));
+
+                                        withFunc = withoutFunc+ msg.length() * 8;  //(msg.getBytes().toString().length());
+                                        bitsWithFUnc.setText("Biths with Function "+ withFunc); //according to UTF unicode, each character contains 8bits
 
                                         dialog.dismiss();
 
@@ -154,10 +206,11 @@ public class SessionFragment extends Fragment {
                                 .show();
                     }
 
-                    if (data.contains("re:")){
+                    if (data.contains("re:")) {
                         double result = Double.parseDouble(data.split(":")[1]);
 
-                        Toast.makeText(getActivity(),"Result is "+result, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), "Result is " + result, Toast.LENGTH_LONG).show();
+
 
                     }
 
@@ -174,10 +227,12 @@ public class SessionFragment extends Fragment {
         final EditText value2 = (EditText) view.findViewById(R.id.value2);
         Button sendArgs = (Button) view.findViewById(R.id.sendArgs);
 
-        MaterialDialog.Builder builder = new MaterialDialog.Builder(getActivity()).customView(view,false);
+        MaterialDialog.Builder builder = new MaterialDialog.Builder(getActivity()).customView(view, false);
 
         final MaterialDialog dialog = builder.build();
         dialog.show();
+
+
 
         sendArgs.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -190,9 +245,22 @@ public class SessionFragment extends Fragment {
                 if (value2.getText().toString() == null) val2 = 0;
                 else val2 = Double.parseDouble(value2.getText().toString());
 
-                client.sendSessionMessage(new Payload<MyMessage>(new MyMessage(funcName + ":" + val1 + ":" + val2)));
+
+                String msg = funcName + ":" + val1 + ":" + val2;
+
+                withoutFunc = msg.length() * 8; //msg.getBytes().toString().length();
+                bitswithoutFunc.setText( "Bits without Function"+ (msg.length() * 8)); //according to UTF unicode, each character contains 8bits
+
+                final long startTime = System.nanoTime();
+
+                client.sendSessionMessage(new Payload<MyMessage>(new MyMessage(msg)));
 
                 dialog.dismiss();
+                long endTime = System.nanoTime();
+
+                long totalTime = endTime - startTime;
+
+                time.setText("Required Time for client: " + totalTime);
 
             }
         });
@@ -215,10 +283,10 @@ public class SessionFragment extends Fragment {
                 textview.setText("");
                 if (countDownTimer != null) {
                     countDownTimer.cancel();
-                    countDownTimer = new CountDownTimerClass(20000, 1000);
+                    countDownTimer = new CountDownTimerClass(60000, 1000);
                     countDownTimer.start();
                 } else {
-                    countDownTimer = new CountDownTimerClass(20000, 1000);
+                    countDownTimer = new CountDownTimerClass(60000, 1000);
                     countDownTimer.start();
                 }
             }
@@ -238,63 +306,76 @@ public class SessionFragment extends Fragment {
         String[] optList = msg.split(":");
         String funcName = optList[0];
 
-        String funcPref = preferences.getString("func","f");
-        double value1Pref = Double.parseDouble(preferences.getString("x","0"));
-        double value2Pref = Double.parseDouble(preferences.getString("y","0"));
+        String funcPref = preferences.getString("func", "f");
+        double value1Pref = Double.parseDouble(preferences.getString("x", "0"));
+        double value2Pref = Double.parseDouble(preferences.getString("y", "0"));
 
 
-        if (msg.contains("act")){
+        if (msg.contains("act")) {
 
             int optSl = Integer.parseInt(optList[1]);
 
-            if (optSl == 0){
+            if (optSl == 0) {
+                //  funcPref = ADDITION;
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putString("operation",funcPref+":"+prefMsgList[1]+":"+prefMsgList[2]+":"+prefMsgList[3]);
-                editor.putString("func","f");
-                editor.putString("x","0");
-                editor.putString("y","0");
+                editor.putString("operation", funcPref + ":" + prefMsgList[1] + ":" + prefMsgList[2] + ":" + prefMsgList[3]);
+                editor.putString("func", "f");
+                editor.putString("x", "0");
+                editor.putString("y", "0");
                 editor.apply();
-            }else if (optSl == 1){
+                funcPref = ADDITION;
+            } else if (optSl == 1) {
+                //   funcPref = SUBSTRACTION;
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putString("operation",prefMsgList[0]+":"+funcPref+":"+prefMsgList[2]+":"+prefMsgList[3]);
-                editor.putString("func","f");
-                editor.putString("x","0");
-                editor.putString("y","0");
+                editor.putString("operation", prefMsgList[0] + ":" + funcPref + ":" + prefMsgList[2] + ":" + prefMsgList[3]);
+                editor.putString("func", "f");
+                editor.putString("x", "0");
+                editor.putString("y", "0");
                 editor.apply();
-            }else if (optSl == 2){
+                funcPref = SUBSTRACTION;
+            } else if (optSl == 2) {
+                //    funcPref = MULTIPLICATION;
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putString("operation",prefMsgList[0]+":"+prefMsgList[1]+":"+funcPref+":"+prefMsgList[3]);
-                editor.putString("func","f");
-                editor.putString("x","0");
-                editor.putString("y","0");
+                editor.putString("operation", prefMsgList[0] + ":" + prefMsgList[1] + ":" + funcPref + ":" + prefMsgList[3]);
+                editor.putString("func", "f");
+                editor.putString("x", "0");
+                editor.putString("y", "0");
                 editor.apply();
-            }else if (optSl == 3){
+                funcPref = MULTIPLICATION;
+            } else if (optSl == 3) {
+                //    funcPref = DIVISION;
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putString("operation",prefMsgList[0]+":"+prefMsgList[1]+":"+prefMsgList[2]+":"+funcPref);
-                editor.putString("func","f");
-                editor.putString("x","0");
-                editor.putString("y","0");
+                editor.putString("operation", prefMsgList[0] + ":" + prefMsgList[1] + ":" + prefMsgList[2] + ":" + funcPref);
+                editor.putString("func", "f");
+                editor.putString("x", "0");
+                editor.putString("y", "0");
                 editor.apply();
+                funcPref = DIVISION;
             }
 
             double result = getResult(funcPref, value1Pref, value2Pref);
             server.sendLocalSessionEvent(new Payload<MyMessage>(new MyMessage("re:" + result)));
 
-        }else {
+        } else {
 
             double val1 = Double.parseDouble(optList[1]);
             double val2 = Double.parseDouble(optList[2]);
 
             if (prefMsg.contains(funcName)) {
+                if (prefMsg.split(":")[0].equals(funcName)) funcName = ADDITION;
+                else if (prefMsg.split(":")[1].equals(funcName)) funcName = SUBSTRACTION;
+                else if (prefMsg.split(":")[2].equals(funcName)) funcName = MULTIPLICATION;
+                else if (prefMsg.split(":")[3].equals(funcName)) funcName = DIVISION;
+
                 double result = getResult(funcName, val1, val2);
                 server.sendLocalSessionEvent(new Payload<MyMessage>(new MyMessage("re:" + result)));
             } else {
                 server.sendLocalSessionEvent(new Payload<MyMessage>(new MyMessage("op")));
 
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putString("func",funcName);
-                editor.putString("x",val1+"");
-                editor.putString("y",val2+"");
+                editor.putString("func", funcName);
+                editor.putString("x", val1 + "");
+                editor.putString("y", val2 + "");
                 editor.apply();
 
             }
@@ -308,10 +389,45 @@ public class SessionFragment extends Fragment {
 
         double result = 0;
 
-        if (funcName.equals("add")) result = val1 + val2;
-        else if (funcName.equals("sub")) result = val1 - val2;
-        else if (funcName.equals("sub")) result = val1 * val2;
-        else if (funcName.equals("sub")) result = val1 / val2;
+        long startTime = System.nanoTime();
+
+        if (funcName.equals(ADDITION)){
+            result = val1 + val2;
+            long endTime = System.nanoTime();
+
+            long totalTime = endTime - startTime;
+
+            time.setText("Required Time for A Mobile Device: " + totalTime);
+
+        }
+        else if (funcName.equals(SUBSTRACTION)){
+            result = val1 - val2;
+            long endTime = System.nanoTime();
+
+            long totalTime = endTime - startTime;
+
+            time.setText("Required Time for A Mobile Device: " + totalTime);
+
+        }
+        else if (funcName.equals(MULTIPLICATION)){
+            result = val1 * val2;
+            long endTime = System.nanoTime();
+
+            long totalTime = endTime - startTime;
+
+            time.setText("Required Time for A Mobile Device: " + totalTime);
+
+        }
+        else if (funcName.equals(DIVISION)) {
+            result = val1 / val2;
+            long endTime = System.nanoTime();
+
+            long totalTime = endTime - startTime;
+
+            time.setText("Required Time for A Mobile Device: " + totalTime);
+
+        }
+
 
         return result;
 

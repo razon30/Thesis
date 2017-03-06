@@ -1,43 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
 
-<TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="00"
-    android:layout_gravity="center"
-    android:textColor="@color/colorPrimary"
-    android:textSize="22sp"
-    android:layout_margin="15dp"
-    android:id="@+id/textview"/>
-
-    <Button
+    <TextView
+        android:id="@+id/textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SEND MESSAGE"
-        android:id="@+id/btn_send_message"/>
+        android:layout_gravity="center"
+        android:layout_margin="15dp"
+        android:text="00"
+        android:textColor="@color/colorPrimary"
+        android:textSize="22sp" />
 
     <Button
+        android:id="@+id/btn_send_message"
+        android:layout_width="wrap_content"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:text="SEND MESSAGE" />
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:id="@+id/timeTosend"/>
+
+    <TextView
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:id="@+id/numberOfBitswithFUnc"/>
+
+
+    <TextView
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:id="@+id/numberOfBitswithoutFunc"/>
+
+
+
+    <Button
+        android:id="@+id/btnAddition"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Addition"
-        android:visibility="gone"
-        android:id="@+id/btnAddition"/>
+        android:visibility="gone" />
 
     <Button
+        android:id="@+id/btn_stop_session"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="STOP"
-        android:id="@+id/btn_stop_session"/>
+        android:text="STOP" />
 
     <include layout="@layout/layout_calculate"></include>
 
     <android.support.v7.widget.RecyclerView
+        android:id="@+id/list_messages"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/list_messages"/>
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

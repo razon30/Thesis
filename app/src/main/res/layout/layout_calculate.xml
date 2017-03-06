@@ -1,40 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/calculate_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:visibility="gone">
 
     <Button
+        android:id="@+id/add"
         android:layout_width="0dp"
         android:layout_height="40dp"
-        android:layout_weight="1"
         android:layout_margin="5dp"
-        android:text="Adition"
-        android:id="@+id/add"/>
+        android:layout_weight="1"
+        android:text="Adition" />
 
     <Button
+        android:id="@+id/sub"
         android:layout_width="0dp"
         android:layout_height="40dp"
-        android:layout_weight="1"
         android:layout_margin="5dp"
-        android:text="Substraction"
-        android:id="@+id/sub"/>
+        android:layout_weight="1"
+        android:text="Substraction" />
 
     <Button
+        android:id="@+id/multi"
         android:layout_width="0dp"
         android:layout_height="40dp"
-        android:layout_weight="1"
         android:layout_margin="5dp"
-        android:text="Multiplication"
-        android:id="@+id/multi"/>
+        android:layout_weight="1"
+        android:text="Multiplication" />
 
     <Button
+        android:id="@+id/div"
         android:layout_width="0dp"
         android:layout_height="40dp"
-        android:layout_weight="1"
         android:layout_margin="5dp"
-        android:text="Division"
-        android:id="@+id/div"/>
+        android:layout_weight="1"
+        android:text="Division" />
 
 
 </LinearLayout>
